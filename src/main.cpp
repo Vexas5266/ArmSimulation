@@ -40,7 +40,7 @@ int main ()
 		ClearBackground(WHITE);
 
 		//Update model rotations and translations like irl
-		J1Model.transform = MatrixRotateZ(-q1) * MatrixTranslate(0, 0, target.z);
+		J1Model.transform = MatrixRotateZ(-q1) * MatrixTranslate(0, 0, INTOPIXELS*target.z);
 		J2Model.transform = MatrixRotateZ(-q2) * MatrixTranslate(-J1_LENGTH*INTOPIXELS, 0, 0) * J1Model.transform;
 		J4Model.transform = MatrixRotateX(-q4) * MatrixTranslate(-SHOULDER_LENGTH*INTOPIXELS, 0, 0) * J2Model.transform;
 		PitchModel.transform = MatrixRotateZ(-qP) * MatrixTranslate(-(J2_LENGTH-SHOULDER_LENGTH)*INTOPIXELS, 0, 0) * J4Model.transform;
@@ -63,9 +63,9 @@ int main ()
 			if(IsKeyDown(KEY_E)) qPTarget += (SPEED/4);
 			if(IsKeyDown(KEY_V)) qVTarget += (SPEED/4);
 
-			target.x = -(PIXELSTOIN*LockOnPos.x - (VALK_LENGTH + WRIST_RAD)*cosf(qPTarget-M_PI));
-			target.y = -(PIXELSTOIN*LockOnPos.y - (VALK_LENGTH + WRIST_RAD)*sinf(qPTarget-M_PI));
-			target.z = -(((VALK_LENGTH + WRIST_RAD)*cosf(q4Target-M_PI)*(VALK_LENGTH + WRIST_RAD)*cosf(q4Target-M_PI)) - (VALK_LENGTH + WRIST_RAD));
+			target.x = -(PIXELSTOIN*LockOnPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qPTarget));
+			target.y = (PIXELSTOIN*LockOnPos.y - (((VALK_LENGTH + WRIST_RAD)*sinf(qPTarget)) + (VALK_LENGTH+WRIST_RAD)*sinf(qT)*cosf(qP)*sinf(q4Target))*sinf(q4Target));
+			target.z = (PIXELSTOIN*LockOnPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4Target)*sinf(qP-M_PI));
 
 		} else {
 			LockOnPos = {0,0,0};
