@@ -177,4 +177,5 @@ Add limits (collision detection?)
 	Need to add x axis and rover?
 2 modes: lock on point/unlock
 Set pos mode
+Lock mode X wobbly
 */
