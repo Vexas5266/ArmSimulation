@@ -57,14 +57,14 @@ int main ()
 			
 			if(IsKeyPressed(KEY_L)) lockMode = false;
 			
-			if(IsKeyDown(KEY_R)) q4Target -= (SPEED/4);
-			if(IsKeyDown(KEY_F)) q4Target += (SPEED/4);
-			if(IsKeyDown(KEY_Q)) qPTarget -= (SPEED/4);
-			if(IsKeyDown(KEY_E)) qPTarget += (SPEED/4);
-			if(IsKeyDown(KEY_V)) qVTarget += (SPEED/4);
+			if(IsKeyDown(KEY_R)) q4Target -= (SPEED/8);
+			if(IsKeyDown(KEY_F)) q4Target += (SPEED/8);
+			if(IsKeyDown(KEY_Q)) qPTarget -= (SPEED/8);
+			if(IsKeyDown(KEY_E)) qPTarget += (SPEED/8);
+			if(IsKeyDown(KEY_V)) qVTarget += (SPEED/8);
 
 			target.x = -(PIXELSTOIN*LockOnPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qPTarget));
-			target.y = (PIXELSTOIN*LockOnPos.y - (((VALK_LENGTH + WRIST_RAD)*sinf(qPTarget)) + (VALK_LENGTH+WRIST_RAD)*sinf(qT)*cosf(qP)*sinf(q4Target))*sinf(q4Target));
+			target.y = (PIXELSTOIN*LockOnPos.y - (VALK_LENGTH+WRIST_RAD)*sinf(qT)*cosf(qP)*sinf(q4Target)*sinf(q4Target) - ((VALK_LENGTH + WRIST_RAD)*sinf(qPTarget)*cosf(q4Target)));
 			target.z = (PIXELSTOIN*LockOnPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4Target)*sinf(qP-M_PI));
 
 		} else {
@@ -75,8 +75,8 @@ int main ()
 			if(IsKeyDown(KEY_DOWN)) target.y -= SPEED;
 			if(IsKeyDown(KEY_LEFT)) target.x -= SPEED;
 			if(IsKeyDown(KEY_RIGHT)) target.x += SPEED;
-			if(IsKeyDown(KEY_Z)) target.z -= SPEED*2;
-			if(IsKeyDown(KEY_C)) target.z += SPEED*2;
+			if(IsKeyDown(KEY_Z)) target.z -= SPEED;
+			if(IsKeyDown(KEY_C)) target.z += SPEED;
 
 			if(IsKeyDown(KEY_R)) q4Target -= (SPEED/4);
 			if(IsKeyDown(KEY_F)) q4Target += (SPEED/4);
