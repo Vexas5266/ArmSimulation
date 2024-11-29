@@ -23,10 +23,10 @@ int main ()
 		ClearBackground(WHITE);
 
 		ik.Transform();
-		ik.CalcWristAngles();
 		ik.Keyboard();
-		ik.CorrectAngles();
+		ik.CalcWristAngles();
 		ik.CalcLinearMovement();
+		ik.CorrectAngles();
 
 		BeginDrawing();
 		BeginMode3D(camera);
@@ -40,15 +40,17 @@ int main ()
 
 /*
 TODO:
-Fix angles to be more clear, have two separate: target and actual
-Separate joint drawing angles and position to be more clear
-Display angles and position
-Shader?
-Path of motion for keyboard typing
-Software limits
-Add limits (collision detection?)
-	Need to add x axis and rover?
-2 modes: lock on point/unlock
-Set pos mode
-Lock mode X wobbly
+	Features:
+		Display angles and position
+		Shader?
+		Path of motion for keyboard typing
+		Software limits
+		Add limits (collision detection?)
+			Need to add x axis and rover?
+		Set pos mode
+		Lock mode X wobbly
+
+	Issues:
+		Slides on range of motion
+		Undermode
 */
