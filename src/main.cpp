@@ -48,9 +48,8 @@ TODO:
 		Add limits (collision detection?)
 			Need to add x axis and rover?
 		Set pos mode
-		Lock mode X wobbly
 
 	Issues:
 		Slides on range of motion
-		Undermode
+		Lock mode X wobbly
 */

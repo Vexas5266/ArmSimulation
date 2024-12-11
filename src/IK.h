@@ -16,20 +16,20 @@ using namespace std;
 #define SHOULDER_LENGTH 7.328739921
 #define VALK_LENGTH 6.24943834646
 
-#define J1_FWD_LIM 9
-#define J1_REV_LIM -9
+#define J1_FWD_LIM 6.3
+#define J1_REV_LIM -6.3
 
-#define J2_FWD_LIM 180
-#define J2_REV_LIM -55
+#define J2_FWD_LIM 164
+#define J2_REV_LIM -54
 
-#define J3_FWD_LIM 115
-#define J3_REV_LIM -135
+#define J3_FWD_LIM 90
+#define J3_REV_LIM -116.8
 
-#define PITCH_FWD_LIM 350
-#define PITCH_REV_LIM 10
+#define PITCH_FWD_LIM 355
+#define PITCH_REV_LIM 360
 
 #define J4_FWD_LIM 350
-#define J4_REV_LIM 355
+#define J4_REV_LIM 360
 
 #define INTOPIXELS 12.7
 #define PIXELSTOIN (1/12.7)
@@ -55,7 +55,7 @@ class IK {
 
         joint q1, q2, q3, q4, qP, qV;
 
-        bool underMode, lockMode;
+        bool underMode, lockMode, limsOverride;
 
     public:
         IK() {
@@ -69,6 +69,7 @@ class IK {
             qP = {0, 0, PITCH_FWD_LIM*DEG2RAD, PITCH_REV_LIM*DEG2RAD};
  
             underMode = lockMode = 0;
+            limsOverride = false;
             J1Model = LoadModel("J1Model.obj");
             J2Model = LoadModel("J2Model.obj");
             J4Model = LoadModel("J4Model.obj");
@@ -86,6 +87,7 @@ class IK {
         void CalcLinearMovement();
         bool atFwdLim(joint q);
         bool atRevLim(joint q);
+        void LimitJoint(joint &q);
 };
 
 #endif

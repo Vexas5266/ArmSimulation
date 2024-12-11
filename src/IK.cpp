@@ -13,10 +13,10 @@ void IK::Draw() {
 	EndMode3D();
 
 	DrawText("Arm Simulation", 5,5,20,BLACK);
-	DrawText("q1m: ", 5,700,20,BLACK);
-	DrawText(TextFormat("%.2f", q1.motor), 150,700,20,BLACK);
-	DrawText("Z: ", 5,650,20,BLACK);
-	DrawText(TextFormat("%.2f", WristPos.z), 40,650,20,BLACK);
+	DrawText("th: ", 5,700,20,BLACK);
+	DrawText(TextFormat("%.2f", sqrt(pow(WristPos.x,2) + pow(WristPos.y,2))), 150,700,20,BLACK);
+	DrawText("X: ", 5,650,20,BLACK);
+	DrawText(TextFormat("%.2f", WristPos.x), 40,650,20,BLACK);
 	DrawText("Y: ", 150,650,20,BLACK);
 	DrawText(TextFormat("%.2f", WristPos.y), 190,650,20,BLACK);
 	DrawText("q3a: ", 5,600,20,BLACK);
@@ -47,15 +47,11 @@ void IK::Transform() {
 
 void IK::CalcWristAngles() {
 	qP.motor = qP.apparent - q3.apparent*cosf(q4.motor);
-	CorrectAngles();
-	if (atFwdLim(qP)) qP.motor = qP.FwdLim;
-	if (atRevLim(qP)) qP.motor = qP.RevLim;
+	LimitJoint(qP);
 	qP.apparent = qP.motor + q3.apparent*cosf(q4.motor);
 
 	q4.motor = q4.apparent;
-	CorrectAngles();
-	if (atFwdLim(q4)) q4.motor = q4.FwdLim;
-	if (atRevLim(q4)) q4.motor = q4.RevLim;
+	LimitJoint(q4);
 	q4.apparent = q4.motor;
 
 	qV.motor = qV.apparent - (q3.apparent*sinf(q4.motor))*sinf(qP.motor);
@@ -63,8 +59,8 @@ void IK::CalcWristAngles() {
 
 void IK::Keyboard() {
 	if(IsKeyDown(KEY_UP)) WristPos.y += SPEED;
-	if(IsKeyDown(KEY_DOWN)) WristPos.y -= SPEED;
-	if(IsKeyDown(KEY_LEFT)) WristPos.x -= SPEED;
+	if(IsKeyDown(KEY_DOWN) && !atRevLim(q3)) WristPos.y -= SPEED;
+	if(IsKeyDown(KEY_LEFT) && !atRevLim(q3)) WristPos.x -= SPEED;
 	if(IsKeyDown(KEY_RIGHT)) WristPos.x += SPEED;
 	if(IsKeyDown(KEY_Z)) WristPos.z -= SPEED;
 	if(IsKeyDown(KEY_C)) WristPos.z += SPEED;
@@ -79,12 +75,6 @@ void IK::Keyboard() {
 	} else {
 		if(IsKeyPressed(KEY_L)) lockMode = true;
 	}
-
-	if (underMode) {
-		if(IsKeyPressed(KEY_U)) underMode = false;
-	} else {
-		if(IsKeyPressed(KEY_U)) underMode = true;
-	}
 	
 	if(IsKeyDown(KEY_P)) {
 		WristPos.x = 10;
@@ -93,6 +83,7 @@ void IK::Keyboard() {
 		q4.apparent = 0;
 		qP.apparent = 0;
 		qV.apparent = 0;
+		underMode = false;
 	}
 }
 
@@ -109,48 +100,48 @@ void IK::CorrectAngles() {
 }
 
 void IK::CalcLinearMovement() {
-	if (underMode) {
-		q3.motor = acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
-		q2.motor = atan2(WristPos.y, WristPos.x) - atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor)));
-		if (atFwdLim(q2)) q2.motor = q2.FwdLim;
-		if (atRevLim(q2)) q2.motor = q2.RevLim;
-		if (atFwdLim(q3)) q3.motor = q3.FwdLim;
-		if (atRevLim(q3)) q3.motor = q3.RevLim;
-		q3.apparent = q2.motor + q3.motor;
-	} else {
-		q3.motor = acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
-		q2.motor = atan2(WristPos.y, WristPos.x) + atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor)));
-		q3.motor = -q3.motor;
 
-		if (atFwdLim(q2)) q2.motor = q2.FwdLim;
-		if (atRevLim(q2)) q2.motor = q2.RevLim;
-		if (atFwdLim(q3)) q3.motor = q3.FwdLim;
-		if (atRevLim(q3)) q3.motor = q3.RevLim;
-		q3.apparent = q2.motor + q3.motor;
+	if ((q3.motor >= 0) && (WristPos.x <= 0)) {
+		underMode = true;
+	} else if ((q3.motor <= 0) && (WristPos.x >= 0)) {
+		underMode = false;
 	}
+
+	q3.motor = acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
+	if (sqrt(pow(WristPos.x,2) + pow(WristPos.y,2)) >= (J2_LENGTH+J3_LENGTH)) q3.motor = 0;
+
+	q2.motor = underMode? atan2(WristPos.y, WristPos.x) - atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor))) : atan2(WristPos.y, WristPos.x) + atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor)));
+	q3.motor = underMode? q3.motor : -q3.motor;
+
+	LimitJoint(q2);
+	LimitJoint(q3);
+
 	q2.apparent = q2.motor;
+	q3.apparent = q2.motor + q3.motor;
+
 	WristPos.x = ((J2_LENGTH*cosf(q2.apparent))+(J3_LENGTH*cosf(q3.apparent)));
 	WristPos.y = ((J2_LENGTH*sinf(q2.apparent))+(J3_LENGTH*sinf(q3.apparent)));
 	
 	if (lockMode) {
-		WristPos.x = -(PIXELSTOIN*GripperPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qP.apparent));
-		WristPos.y = (PIXELSTOIN*GripperPos.y - (VALK_LENGTH+WRIST_RAD)*sinf(q3.apparent)*cosf(qP.motor)*sinf(q4.apparent)*sinf(q4.apparent) - ((VALK_LENGTH + WRIST_RAD)*sinf(qP.apparent)*cosf(q4.apparent)));
-		WristPos.z = (PIXELSTOIN*GripperPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4.apparent)*sinf(qP.motor-M_PI));
-		// WristPos.x = -(PIXELSTOIN*GripperPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qP.motor));
-		// WristPos.y = (PIXELSTOIN*GripperPos.y - (VALK_LENGTH+WRIST_RAD)*sinf(q3.apparent)*cosf(qP.motor)*sinf(q4.motor)*sinf(q4.motor) - ((VALK_LENGTH + WRIST_RAD)*sinf(qP.motor)*cosf(q4.motor)));
-		// WristPos.z = (PIXELSTOIN*GripperPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4.motor)*sinf(qP.motor-M_PI));
+		// WristPos.x = -(PIXELSTOIN*GripperPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qP.apparent));
+		// WristPos.y = (PIXELSTOIN*GripperPos.y - (VALK_LENGTH+WRIST_RAD)*sinf(q3.apparent)*cosf(qP.motor)*sinf(q4.apparent)*sinf(q4.apparent) - ((VALK_LENGTH + WRIST_RAD)*sinf(qP.apparent)*cosf(q4.apparent)));
+		// WristPos.z = (PIXELSTOIN*GripperPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4.apparent)*sinf(qP.motor-M_PI));
+
+		WristPos = {0,0,0}; //inches
+		WristPos = WristPos * (GripperPos*PIXELSTOIN) * MatrixTranslate((VALK_LENGTH+WRIST_RAD), 0, 0);
+		// WristPos.x *= -1;
 	} else {
-		GripperPos = {0,0,0};
+		GripperPos = {0,0,0}; //pixels
 		GripperPos = GripperPos * (MatrixTranslate(-VALK_LENGTH*INTOPIXELS, 0, 0) * ValkModel.transform);
 	}
 
 	q1.motor = q1.apparent = WristPos.z;
-	if (atFwdLim(q1)) q1.motor = q1.FwdLim;
-	if (atRevLim(q1)) q1.motor = q1.RevLim;
+	LimitJoint(q1);
 	WristPos.z = q1.motor;
 }
 
 bool IK::atFwdLim(joint q) {
+	if (limsOverride) return false;
 	if (q.RevLim > q.FwdLim) {
 		return (q.motor >= q.FwdLim) && (q.motor <= (q.RevLim + q.FwdLim)/2);
 	}
@@ -158,8 +149,15 @@ bool IK::atFwdLim(joint q) {
 }
 
 bool IK::atRevLim(joint q) {
+	if (limsOverride) return false;
 	if (q.RevLim > q.FwdLim) {
 		return (q.motor <= q.RevLim) && (q.motor >= (q.RevLim + q.FwdLim)/2);
 	}
 	return q.motor <= q.RevLim;
+}
+
+void IK::LimitJoint(joint &q) {
+	CorrectAngles();
+	if (atFwdLim(q)) q.motor = q.FwdLim;
+	if (atRevLim(q)) q.motor = q.RevLim;
 }
