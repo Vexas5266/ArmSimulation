@@ -13,16 +13,18 @@ void IK::Draw() {
 	EndMode3D();
 
 	DrawText("Arm Simulation", 5,5,20,BLACK);
-	DrawText("th: ", 5,700,20,BLACK);
-	DrawText(TextFormat("%.2f", sqrt(pow(WristPos.x,2) + pow(WristPos.y,2))), 150,700,20,BLACK);
+	DrawText("CM: ", 5,700,20,BLACK);
+	if (controlMode == OPEN_LOOP) DrawText("O", 150,700,20,BLACK);
+	else if (controlMode == CLOSED_LOOP) DrawText("C", 150,700,20,BLACK);
+	else DrawText("IK", 150,700,20,BLACK);
 	DrawText("X: ", 5,650,20,BLACK);
 	DrawText(TextFormat("%.2f", WristPos.x), 40,650,20,BLACK);
 	DrawText("Y: ", 150,650,20,BLACK);
 	DrawText(TextFormat("%.2f", WristPos.y), 190,650,20,BLACK);
-	DrawText("q3a: ", 5,600,20,BLACK);
-	DrawText(TextFormat("%.2f", RAD2DEG*q3.apparent), 60,600,20,BLACK);
-	DrawText("qPm: ", 150,600,20,BLACK);
-	DrawText(TextFormat("%.2f", RAD2DEG*qP.motor), 210,600,20,BLACK);
+	DrawText("B: ", 5,600,20,BLACK);
+	DrawText(TextFormat("%d", buttonInput), 60,600,20,BLACK);
+	// DrawText("qVt: ", 150,600,20,BLACK);
+	// DrawText(TextFormat("%.2f", RAD2DEG*qV.target), 210,600,20,BLACK);
 
 	EndDrawing();
 }
@@ -37,7 +39,7 @@ void IK::Unload() {
 }
 
 void IK::Transform() {
-	J1Model.transform = MatrixRotateZ(-q2.motor) * MatrixTranslate(0, 0, INTOPIXELS*WristPos.z);
+	J1Model.transform = MatrixRotateZ(-q2.motor) * MatrixTranslate(0, 0, INTOPIXELS*q1.motor);
 	J2Model.transform = MatrixRotateZ(-q3.motor) * MatrixTranslate(-J2_LENGTH*INTOPIXELS, 0, 0) * J1Model.transform;
 	J4Model.transform = MatrixRotateX(-q4.motor) * MatrixTranslate(-SHOULDER_LENGTH*INTOPIXELS, 0, 0) * J2Model.transform;
 	PitchModel.transform = MatrixRotateZ(-qP.motor) * MatrixTranslate(-(J3_LENGTH-SHOULDER_LENGTH)*INTOPIXELS, 0, 0) * J4Model.transform;
@@ -45,35 +47,47 @@ void IK::Transform() {
 	SolModel.transform = MatrixRotateY(M_PI) * MatrixTranslate(WRIST_RAD*INTOPIXELS, 0, 0) * PitchModel.transform;
 }
 
-void IK::CalcWristAngles() {
-	qP.motor = qP.apparent - q3.apparent*cosf(q4.motor);
-	LimitJoint(qP);
-	qP.apparent = qP.motor + q3.apparent*cosf(q4.motor);
-
-	q4.motor = q4.apparent;
-	LimitJoint(q4);
-	q4.apparent = q4.motor;
-
-	qV.motor = qV.apparent - (q3.apparent*sinf(q4.motor))*sinf(qP.motor);
-}
-
 void IK::Keyboard() {
-	if(IsKeyDown(KEY_UP)) WristPos.y += SPEED;
-	if(IsKeyDown(KEY_DOWN) && !atRevLim(q3)) WristPos.y -= SPEED;
-	if(IsKeyDown(KEY_LEFT) && !atRevLim(q3)) WristPos.x -= SPEED;
-	if(IsKeyDown(KEY_RIGHT)) WristPos.x += SPEED;
-	if(IsKeyDown(KEY_Z)) WristPos.z -= SPEED;
-	if(IsKeyDown(KEY_C)) WristPos.z += SPEED;
-	if(IsKeyDown(KEY_R)) q4.apparent -= (SPEED/8);
-	if(IsKeyDown(KEY_F)) q4.apparent += (SPEED/8);
-	if(IsKeyDown(KEY_E)) qP.apparent += (SPEED/8);
-	if(IsKeyDown(KEY_Q)) qP.apparent -= (SPEED/8);
-	if(IsKeyDown(KEY_V)) qV.apparent += (SPEED/8);
-
-	if (lockMode) {
-		if(IsKeyPressed(KEY_L)) lockMode = false;
-	} else {
-		if(IsKeyPressed(KEY_L)) lockMode = true;
+	if (IsKeyPressed(KEY_M)) {
+		if (controlMode == OPEN_LOOP) controlMode = CLOSED_LOOP;
+		else if (controlMode == CLOSED_LOOP) controlMode = INVERSE_KINEMATICS;
+		else controlMode = OPEN_LOOP;
+	}
+	
+	if (controlMode == OPEN_LOOP) {
+		if(IsKeyPressed(KEY_ZERO)) direction = direction? false : true;
+		if(IsKeyDown(KEY_ONE)) buttonInput = 1; //X
+		else if(IsKeyDown(KEY_TWO)) buttonInput = 2; //J2
+		else if(IsKeyDown(KEY_THREE)) buttonInput = 3; //J3
+		else if(IsKeyDown(KEY_FOUR)) buttonInput = 4; //J4
+		else if(IsKeyDown(KEY_FIVE)) buttonInput = 5; //Pitch
+		else if(IsKeyDown(KEY_SIX)) buttonInput = 6; //Roll Valkyrie
+		else buttonInput = 0;
+	} else if (controlMode == INVERSE_KINEMATICS) {
+		if(IsKeyDown(KEY_UP)) WristPos.y += SPEED;
+		if(IsKeyDown(KEY_DOWN)) WristPos.y -= SPEED;
+		if(IsKeyDown(KEY_LEFT)) WristPos.x -= SPEED;
+		if(IsKeyDown(KEY_RIGHT)) WristPos.x += SPEED;
+		if(IsKeyDown(KEY_Z)) WristPos.z -= SPEED;
+		if(IsKeyDown(KEY_C)) WristPos.z += SPEED;
+		if(IsKeyDown(KEY_R)) q4.apparent -= (SPEED/8);
+		if(IsKeyDown(KEY_F)) q4.apparent += (SPEED/8);
+		if(IsKeyDown(KEY_E)) qP.apparent += (SPEED/8);
+		if(IsKeyDown(KEY_Q)) qP.apparent -= (SPEED/8);
+		if(IsKeyDown(KEY_V)) qV.apparent += (SPEED/8);
+		if(IsKeyPressed(KEY_L)) lockMode = lockMode? false : true;
+	} else if (controlMode == CLOSED_LOOP) {
+		if(IsKeyDown(KEY_UP)) q2.target += (SPEED/8);
+		if(IsKeyDown(KEY_DOWN)) q2.target -= (SPEED/8);
+		if(IsKeyDown(KEY_LEFT)) q3.target -= (SPEED/8);
+		if(IsKeyDown(KEY_RIGHT)) q3.target += (SPEED/8);
+		if(IsKeyDown(KEY_Z)) q1.target -= (SPEED/8);
+		if(IsKeyDown(KEY_C)) q1.target += (SPEED/8);
+		if(IsKeyDown(KEY_R)) q4.target -= (SPEED/8);
+		if(IsKeyDown(KEY_F)) q4.target += (SPEED/8);
+		if(IsKeyDown(KEY_E)) qP.target += (SPEED/8);
+		if(IsKeyDown(KEY_Q)) qP.target -= (SPEED/8);
+		if(IsKeyDown(KEY_V)) qV.target += (SPEED/8);
 	}
 	
 	if(IsKeyDown(KEY_P)) {
@@ -97,47 +111,60 @@ void IK::CorrectAngles() {
 	if (q4.motor < 0) q4.motor += 2*M_PI;
 	if (qP.motor > 2*M_PI) qP.motor -= 2*M_PI;
 	if (qP.motor < 0) qP.motor += 2*M_PI;
+
+	if (q4.motor > 2*M_PI) q4.target -= 2*M_PI;
+	if (q4.motor < 0) q4.target += 2*M_PI;
+	if (qP.motor > 2*M_PI) qP.target -= 2*M_PI;
+	if (qP.motor < 0) qP.target += 2*M_PI;
 }
 
-void IK::CalcLinearMovement() {
+void IK::CalculateIK() {
 
-	if ((q3.motor >= 0) && (WristPos.x <= 0)) {
-		underMode = true;
-	} else if ((q3.motor <= 0) && (WristPos.x >= 0)) {
-		underMode = false;
-	}
+	//Calculate which solution to use
+	if ((q3.motor >= 0) && (WristPos.x <= 0)) underMode = true;
+	else if ((q3.motor <= 0) && (WristPos.x >= 0)) underMode = false;
 
-	q3.motor = acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
-	if (sqrt(pow(WristPos.x,2) + pow(WristPos.y,2)) >= (J2_LENGTH+J3_LENGTH)) q3.motor = 0;
+	//Calculate motor angles using IK
+	q1.target = WristPos.z;
+	q3.target = acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
+	if (sqrt(pow(WristPos.x,2) + pow(WristPos.y,2)) >= (J2_LENGTH+J3_LENGTH)) q3.target = 0;
+	q2.target = underMode? atan2(WristPos.y, WristPos.x) - atan2(J3_LENGTH*sin(q3.target),J2_LENGTH+(J3_LENGTH*cos(q3.target))) : atan2(WristPos.y, WristPos.x) + atan2(J3_LENGTH*sin(q3.target),J2_LENGTH+(J3_LENGTH*cos(q3.target)));
+	q3.target = underMode? q3.target : -q3.target;
 
-	q2.motor = underMode? atan2(WristPos.y, WristPos.x) - atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor))) : atan2(WristPos.y, WristPos.x) + atan2(J3_LENGTH*sin(q3.motor),J2_LENGTH+(J3_LENGTH*cos(q3.motor)));
-	q3.motor = underMode? q3.motor : -q3.motor;
+	//Limit Joints
+	// LimitJoint(q1);
+	// LimitJoint(q2);
+	// LimitJoint(q3);
 
-	LimitJoint(q2);
-	LimitJoint(q3);
-
-	q2.apparent = q2.motor;
-	q3.apparent = q2.motor + q3.motor;
-
-	WristPos.x = ((J2_LENGTH*cosf(q2.apparent))+(J3_LENGTH*cosf(q3.apparent)));
-	WristPos.y = ((J2_LENGTH*sinf(q2.apparent))+(J3_LENGTH*sinf(q3.apparent)));
+	//Recalculate apparent angles
+	// q2.apparent = q2.target;
+	// q3.apparent = q2.target + q3.target;
 	
-	if (lockMode) {
-		// WristPos.x = -(PIXELSTOIN*GripperPos.x + (VALK_LENGTH + WRIST_RAD)*cosf(qP.apparent));
-		// WristPos.y = (PIXELSTOIN*GripperPos.y - (VALK_LENGTH+WRIST_RAD)*sinf(q3.apparent)*cosf(qP.motor)*sinf(q4.apparent)*sinf(q4.apparent) - ((VALK_LENGTH + WRIST_RAD)*sinf(qP.apparent)*cosf(q4.apparent)));
-		// WristPos.z = (PIXELSTOIN*GripperPos.z - (VALK_LENGTH + WRIST_RAD)*sinf(q4.apparent)*sinf(qP.motor-M_PI));
+	//Recalculate wrist position
+	// WristPos.x = ((J2_LENGTH*cosf(q2.apparent))+(J3_LENGTH*cosf(q3.apparent)));
+	// WristPos.y = ((J2_LENGTH*sinf(q2.apparent))+(J3_LENGTH*sinf(q3.apparent)));
+	// WristPos.z = q1.target;
 
-		WristPos = {0,0,0}; //inches
-		WristPos = WristPos * (GripperPos*PIXELSTOIN) * MatrixTranslate((VALK_LENGTH+WRIST_RAD), 0, 0);
-		// WristPos.x *= -1;
-	} else {
-		GripperPos = {0,0,0}; //pixels
-		GripperPos = GripperPos * (MatrixTranslate(-VALK_LENGTH*INTOPIXELS, 0, 0) * ValkModel.transform);
-	}
+	//Calculate gripper position
+	// GripperPos = {0,0,0}; //pixels
+	// GripperPos = GripperPos * (MatrixTranslate(-VALK_LENGTH*INTOPIXELS, 0, 0) * ValkModel.transform);
 
-	q1.motor = q1.apparent = WristPos.z;
-	LimitJoint(q1);
-	WristPos.z = q1.motor;
+	//////WRIST//////
+
+	//Pitch
+	
+	// LimitJoint(qP);
+	// qP.apparent = qP.target + q3.apparent*cosf(q4.target);
+
+	//J4
+	q4.target = q4.apparent;
+	// LimitJoint(q4);
+	// q4.apparent = q4.target;
+
+	qP.target = qP.apparent - (q2.target + q3.target)*cosf(q4.target);
+
+	//Valkyrie
+	qV.target = qV.apparent - ((q2.target + q3.target)*sinf(q4.target))*sinf(qP.target);
 }
 
 bool IK::atFwdLim(joint q) {
@@ -158,6 +185,54 @@ bool IK::atRevLim(joint q) {
 
 void IK::LimitJoint(joint &q) {
 	CorrectAngles();
-	if (atFwdLim(q)) q.motor = q.FwdLim;
-	if (atRevLim(q)) q.motor = q.RevLim;
+	if (atFwdLim(q)) q.target = q.motor = q.FwdLim;
+	if (atRevLim(q)) q.target = q.motor = q.RevLim;
 }
+
+void IK::UpdateJoint(joint &q) {
+	if (buttonInput == q.button) {
+		direction? q.motor += (SPEED/16) : q.motor -= (SPEED/16); //Set decipercent
+		q.target = q.motor; //update targets based on real motor
+	} else if ((controlMode == CLOSED_LOOP) || (controlMode == INVERSE_KINEMATICS)) {
+		q.motor = q.target; //SetAngle()
+	}
+	LimitJoint(q);
+}
+
+void IK::Update() {
+	// CalcApparents();
+	if (controlMode == INVERSE_KINEMATICS) {
+		CalculateIK();
+	}
+	// CalcApparents();
+	UpdateJoint(q1);
+	UpdateJoint(q2);
+	UpdateJoint(q3);
+	UpdateJoint(q4);
+	UpdateJoint(qP);
+	UpdateJoint(qV);
+	CalcApparents();
+}
+
+void IK::CalcApparents() {
+	q1.apparent = q1.motor;
+	q2.apparent = q2.motor;
+	q3.apparent = q2.motor + q3.motor;
+
+	WristPos.x = ((J2_LENGTH*cosf(q2.apparent))+(J3_LENGTH*cosf(q3.apparent)));
+	WristPos.y = ((J2_LENGTH*sinf(q2.apparent))+(J3_LENGTH*sinf(q3.apparent)));
+	WristPos.z = q1.apparent;
+
+	GripperPos = {0,0,0}; //pixels
+	GripperPos = GripperPos * (MatrixTranslate(-VALK_LENGTH*INTOPIXELS, 0, 0) * ValkModel.transform);
+
+	qP.apparent = qP.motor + q3.apparent*cosf(q4.motor);
+	q4.apparent = q4.motor;
+}
+
+/*
+CURRENT ISSUES:
+	Pitch slides with J4, J3, and J2???
+
+
+*/

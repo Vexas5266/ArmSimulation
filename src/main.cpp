@@ -24,9 +24,8 @@ int main ()
 
 		ik.Transform();
 		ik.Keyboard();
-		ik.CalcWristAngles();
-		ik.CalcLinearMovement();
 		ik.CorrectAngles();
+		ik.Update();
 
 		BeginDrawing();
 		BeginMode3D(camera);
@@ -51,5 +50,5 @@ TODO:
 
 	Issues:
 		Slides on range of motion
-		Lock mode X wobbly
+		Lock mode
 */

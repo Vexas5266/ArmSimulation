@@ -49,27 +49,42 @@ class IK {
         struct joint {
             float motor;
             float apparent;
+            float target;
+            int decipercent;
             float FwdLim;
             float RevLim;
+            int button;
         };
 
         joint q1, q2, q3, q4, qP, qV;
 
-        bool underMode, lockMode, limsOverride;
+        enum ControlMode {
+            OPEN_LOOP,
+            CLOSED_LOOP,
+            INVERSE_KINEMATICS
+        };
+
+        bool underMode, lockMode, limsOverride, direction;
+        ControlMode controlMode;
+        int buttonInput;
 
     public:
         IK() {
             WristPos = {10.0f,0.0f, 0.0f};
             GripperPos = {0, 0, 0};
 
-            q1 = {0, 0, J1_FWD_LIM, J1_REV_LIM};
-            q2 = {0, 0, J2_FWD_LIM*DEG2RAD, J2_REV_LIM*DEG2RAD};
-            q3 = {-20*DEG2RAD, 0, J3_FWD_LIM*DEG2RAD, J3_REV_LIM*DEG2RAD};
-            q4 = {0, 0, J4_FWD_LIM*DEG2RAD, J4_REV_LIM*DEG2RAD};
-            qP = {0, 0, PITCH_FWD_LIM*DEG2RAD, PITCH_REV_LIM*DEG2RAD};
+            q1 = {0, 0, 0, 0, J1_FWD_LIM, J1_REV_LIM, 1};
+            q2 = {0, 0, 0, 0, J2_FWD_LIM*DEG2RAD, J2_REV_LIM*DEG2RAD, 2};
+            q3 = {0, 0, 0, 0, J3_FWD_LIM*DEG2RAD, J3_REV_LIM*DEG2RAD, 3};
+            q4 = {0, 0, 0, 0, J4_FWD_LIM*DEG2RAD, J4_REV_LIM*DEG2RAD, 4};
+            qP = {0, 0, 0, 0, PITCH_FWD_LIM*DEG2RAD, PITCH_REV_LIM*DEG2RAD, 5};
+            qV = {0, 0, 0, 0, 360, 0, 6};
  
             underMode = lockMode = 0;
             limsOverride = false;
+            direction = false;
+            buttonInput = 0;
+            ControlMode controlMode = OPEN_LOOP;
             J1Model = LoadModel("J1Model.obj");
             J2Model = LoadModel("J2Model.obj");
             J4Model = LoadModel("J4Model.obj");
@@ -81,13 +96,15 @@ class IK {
         void Draw();
         void Unload();
         void Transform();
-        void CalcWristAngles();
         void Keyboard();
         void CorrectAngles();
-        void CalcLinearMovement();
+        void CalculateIK();
         bool atFwdLim(joint q);
         bool atRevLim(joint q);
         void LimitJoint(joint &q);
+        void UpdateJoint(joint &q);
+        void Update();
+        void CalcApparents();
 };
 
 #endif
