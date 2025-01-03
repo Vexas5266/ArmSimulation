@@ -125,24 +125,6 @@ void IK::Keyboard()
 	}
 }
 
-void IK::CorrectAngles() 
-{
-	if (wrist.pitch > 360) wrist.pitch -= 360;
-	if (wrist.pitch < 0) wrist.pitch += 360;
-	if (wrist.j4 > 360) wrist.j4 -= 360;
-	if (wrist.j4 < 0) wrist.j4 += 360;
-
-	// if (J4.qMotor > 360) J4.qMotor -= 360;
-	// if (J4.qMotor < 0) J4.qMotor += 360;
-	if (Pitch.qMotor > 360) Pitch.qMotor -= 360;
-	if (Pitch.qMotor < 0) Pitch.qMotor += 360;
-
-	// if (J4.qTarget > 360) J4.qTarget -= 360;
-	// if (J4.qTarget < 0) J4.qTarget += 360;
-	if (Pitch.qTarget > 360) Pitch.qTarget -= 360;
-	if (Pitch.qTarget < 0) Pitch.qTarget += 360;
-}
-
 void IK::CalculateIK() 
 {
 
@@ -204,7 +186,6 @@ bool IK::isOutsideTargetRange(joint J)
 
 void IK::LimitJoint(joint &J) 
 {
-	CorrectAngles();
 	if (atFwdLim(J)) J.qMotor = J.FwdLim;
 	if (atRevLim(J)) J.qMotor = J.RevLim;
 }

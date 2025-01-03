@@ -24,7 +24,6 @@ int main ()
 
 		ik.Transform();
 		ik.Keyboard();
-		ik.CorrectAngles();
 		ik.Update();
 
 		BeginDrawing();

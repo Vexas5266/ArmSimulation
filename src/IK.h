@@ -108,7 +108,6 @@ class IK {
         void Unload();
         void Transform();
         void Keyboard();
-        void CorrectAngles();
         void CalculateIK();
         bool atFwdLim(joint J);
         bool atRevLim(joint J);
