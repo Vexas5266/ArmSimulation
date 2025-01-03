@@ -40,15 +40,17 @@ int main ()
 /*
 TODO:
 	Features:
+		!! Lock mode
 		Display angles and position
-		Shader?
-		Path of motion for keyboard typing
-		Software limits
-		Add limits (collision detection?)
-			Need to add x axis and rover?
-		Set pos mode
+		Path of motion for keyboard typing?
+		Need to add x axis and shoulder?
 
-	Issues:
-		Slides on range of motion
-		Lock mode
+	Make my own matrix library, no stdio include!
+	Make xyz pos and joint angles input to IKcalc func, output desired joint angles
+		Call in different file
+		Make IK a library for both simulator and arm board
+	Update arm software values for physical system
+	Issues with target angles
+		Updating in open mode, with buttons, and limits. User can set target outside of limits
+	Pitch gets limited to wrist 0 for some reason
 */

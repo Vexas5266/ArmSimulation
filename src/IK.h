@@ -7,8 +7,13 @@ using namespace std;
 #include "raylib.h"
 #include "raymath.h"
 #include "resource_dir.h"
+#include "InverseKinematics.h"
+#include "RoveMatrix.h"
 
 #define SPEED 0.2f
+#define SPD_MOD2 2.0f
+#define SPD_MOD4 4.0f
+
 
 #define J2_LENGTH 18
 #define J3_LENGTH 18.5
@@ -22,41 +27,45 @@ using namespace std;
 #define J2_FWD_LIM 164
 #define J2_REV_LIM -54
 
-#define J3_FWD_LIM 90
-#define J3_REV_LIM -116.8
+#define J3_POS_LIM 90
+#define J3_NEG_LIM -116.8
+#define J3_MID_LIM 15
 
-#define PITCH_FWD_LIM 355
-#define PITCH_REV_LIM 360
+#define PITCH_FWD_LIM 350
+#define PITCH_REV_LIM 10
 
-#define J4_FWD_LIM 350
-#define J4_REV_LIM 360
+#define J4_FWD_LIM 90
+#define J4_REV_LIM -260
 
 #define INTOPIXELS 12.7
 #define PIXELSTOIN (1/12.7)
 
 class IK {
     private:
-        Model J1Model;
-        Model J4Model;
-        Model J2Model;
-        Model PitchModel;
-        Model ValkModel;
-        Model SolModel;
+
+        Model SolenoidModel;
 
         Vector3 WristPos;
         Vector3 GripperPos;
 
         struct joint {
-            float motor;
-            float apparent;
-            float target;
-            int decipercent;
-            float FwdLim;
-            float RevLim;
+            float qMotor; //in degrees
+            float qTarget; //in degrees
+            float FwdLim; //in degrees
+            float RevLim; //in degrees
             int button;
+            TransfMatrix transf;
+            Model model;
         };
 
-        joint q1, q2, q3, q4, qP, qV;
+        struct Wrist {
+            float j4;
+            float pitch;
+            float valk;
+        };
+
+        joint J1, J2, J3, J4, Pitch, Valkyrie;
+        Wrist wrist;
 
         enum ControlMode {
             OPEN_LOOP,
@@ -65,32 +74,34 @@ class IK {
         };
 
         bool underMode, lockMode, limsOverride, direction;
-        ControlMode controlMode;
+        ControlMode currentMode, prevMode;
         int buttonInput;
 
     public:
         IK() {
-            WristPos = {10.0f,0.0f, 0.0f};
+            WristPos = {0, 0, 0};
             GripperPos = {0, 0, 0};
+            wrist = {0,0,0};
 
-            q1 = {0, 0, 0, 0, J1_FWD_LIM, J1_REV_LIM, 1};
-            q2 = {0, 0, 0, 0, J2_FWD_LIM*DEG2RAD, J2_REV_LIM*DEG2RAD, 2};
-            q3 = {0, 0, 0, 0, J3_FWD_LIM*DEG2RAD, J3_REV_LIM*DEG2RAD, 3};
-            q4 = {0, 0, 0, 0, J4_FWD_LIM*DEG2RAD, J4_REV_LIM*DEG2RAD, 4};
-            qP = {0, 0, 0, 0, PITCH_FWD_LIM*DEG2RAD, PITCH_REV_LIM*DEG2RAD, 5};
-            qV = {0, 0, 0, 0, 360, 0, 6};
+            J1 = {0, 0, J1_FWD_LIM, J1_REV_LIM, 1};
+            J2 = {60, 0, J2_FWD_LIM, J2_REV_LIM, 2};
+            J3 = {-100, 0, J3_POS_LIM, J3_NEG_LIM, 3};
+            J4 = {90, 0, J4_FWD_LIM, J4_REV_LIM, 4};
+            Pitch = {30, 0, PITCH_FWD_LIM, PITCH_REV_LIM, 5};
+            Valkyrie = {0, 0, 1000, -1000, 6};
  
             underMode = lockMode = 0;
             limsOverride = false;
             direction = false;
             buttonInput = 0;
             ControlMode controlMode = OPEN_LOOP;
-            J1Model = LoadModel("J1Model.obj");
-            J2Model = LoadModel("J2Model.obj");
-            J4Model = LoadModel("J4Model.obj");
-            PitchModel = LoadModel("PitchModel.obj");
-            ValkModel = LoadModel("ValkModel.obj");
-            SolModel = LoadModel("SolModel.obj");
+            ControlMode prevMode = OPEN_LOOP;
+            J2.model = LoadModel("J2Model.obj");
+            J3.model = LoadModel("J3Model.obj");
+            J4.model = LoadModel("J4Model.obj");
+            Pitch.model = LoadModel("PitchModel.obj");
+            Valkyrie.model = LoadModel("ValkModel.obj");
+            SolenoidModel = LoadModel("SolModel.obj");
         }
 
         void Draw();
@@ -99,12 +110,13 @@ class IK {
         void Keyboard();
         void CorrectAngles();
         void CalculateIK();
-        bool atFwdLim(joint q);
-        bool atRevLim(joint q);
-        void LimitJoint(joint &q);
-        void UpdateJoint(joint &q);
+        bool atFwdLim(joint J);
+        bool atRevLim(joint J);
+        bool isOutsideTargetRange(joint J);
+        void LimitJoint(joint &J);
+        void UpdateJoint(joint &J);
         void Update();
-        void CalcApparents();
+        void CalculateApparents();
 };
 
 #endif
