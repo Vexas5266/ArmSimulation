@@ -41,10 +41,8 @@
 class IK {
     private:
 
-        Model SolenoidModel;
-
-        Vector3 WristPos;
-        Vector3 GripperPos;
+        Vector WristPos;
+        Vector GripperPos;
 
         struct joint {
             float qMotor; //in degrees
@@ -62,7 +60,7 @@ class IK {
             float valk;
         };
 
-        joint J1, J2, J3, J4, Pitch, Valkyrie;
+        joint J1, J2, J3, J4, Pitch, Valkyrie, Solenoid;
         Wrist wrist;
 
         enum ControlMode {
@@ -99,7 +97,7 @@ class IK {
             J4.model = LoadModel("J4Model.obj");
             Pitch.model = LoadModel("PitchModel.obj");
             Valkyrie.model = LoadModel("ValkModel.obj");
-            SolenoidModel = LoadModel("SolModel.obj");
+            Solenoid.model = LoadModel("SolModel.obj");
         }
 
         void Draw();
@@ -114,6 +112,7 @@ class IK {
         void UpdateJoint(joint &J);
         void Update();
         void CalculateApparents();
+        void UpdateRayLibMatrix(joint &J);
 };
 
 #endif

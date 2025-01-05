@@ -7,8 +7,8 @@ void IK::Draw()
 	DrawModel(J4.model, (Vector3){0, 0, 0}, 1.0f, ORANGE);
 	DrawModel(Pitch.model, (Vector3){0, 0, 0}, 1.0f, PURPLE);
 	DrawModel(Valkyrie.model, (Vector3){0, 0, 0}, 1.0f, GREEN);
-	DrawModel(SolenoidModel, (Vector3){0, 0, 0}, 1.0f, MAROON);
-	DrawSphere(GripperPos, 2, MAROON);
+	DrawModel(Solenoid.model, (Vector3){0, 0, 0}, 1.0f, MAROON);
+	DrawSphere({GripperPos.x, GripperPos.y, GripperPos.z}, 2, MAROON);
 	DrawGrid(100, 10.0f);
 
 	EndMode3D();
@@ -37,35 +37,44 @@ void IK::Unload()
 	UnloadModel(J4.model);
 	UnloadModel(Pitch.model);
 	UnloadModel(Valkyrie.model);
-	UnloadModel(SolenoidModel);
+	UnloadModel(Solenoid.model);
 }
 
 void IK::TransformArm() 
 {
-	// J2.model.transform = MatrixRotateZ(-J2.qMotor*DEG2RAD) * MatrixTranslate(0, 0, INTOPIXELS*J1.qMotor);
-	J2.transf = Rotate(0,0, -J2.qMotor*DEG2RAD) * Translate(0,0, float(INTOPIXELS*J1.qMotor));
-	J2.model.transform.m0 = J2.transf.m0;
-	J2.model.transform.m1 = J2.transf.m1;
-	J2.model.transform.m2 = J2.transf.m2;
-	J2.model.transform.m3 = J2.transf.m3;
-	J2.model.transform.m4 = J2.transf.m4;
-	J2.model.transform.m5 = J2.transf.m5;
-	J2.model.transform.m6 = J2.transf.m6;
-	J2.model.transform.m7 = J2.transf.m7;
-	J2.model.transform.m8 = J2.transf.m8;
-	J2.model.transform.m9 = J2.transf.m9;
-	J2.model.transform.m10 = J2.transf.m10;
-	J2.model.transform.m11 = J2.transf.m11;
-	J2.model.transform.m12 = J2.transf.m12;
-	J2.model.transform.m13 = J2.transf.m13;
-	J2.model.transform.m14 = J2.transf.m14;
-	J2.model.transform.m15 = J2.transf.m15;
+	J2.transf = Rotate(0,0, -J2.qMotor*DEG2RAD) * Translate(0,0, INTOPIXELS*J1.qMotor);
+	J3.transf = Rotate(0, 0, -J3.qMotor*DEG2RAD) * Translate(-J2_LENGTH*INTOPIXELS, 0, 0) * J2.transf;
+	J4.transf = Rotate((-J4.qMotor+90)*DEG2RAD, 0,0) * Translate(-SHOULDER_LENGTH*INTOPIXELS, 0, 0) * J3.transf;
+	Pitch.transf = Rotate(0,0, -Pitch.qMotor*DEG2RAD) * Translate(-(J3_LENGTH-SHOULDER_LENGTH)*INTOPIXELS, 0, 0) * J4.transf;
+	Valkyrie.transf = Rotate(-Valkyrie.qMotor*DEG2RAD, 0,0) * Translate(-WRIST_RAD*INTOPIXELS, 0, 0) * Pitch.transf;
+	Solenoid.transf = Rotate(0, M_PI, 0) * Translate(WRIST_RAD*INTOPIXELS, 0, 0) * Pitch.transf;
 
-	J3.model.transform = MatrixRotateZ(-J3.qMotor*DEG2RAD) * MatrixTranslate(-J2_LENGTH*INTOPIXELS, 0, 0) * J2.model.transform;
-	J4.model.transform = MatrixRotateX((-J4.qMotor+90)*DEG2RAD) * MatrixTranslate(-SHOULDER_LENGTH*INTOPIXELS, 0, 0) * J3.model.transform;
-	Pitch.model.transform = MatrixRotateZ(-Pitch.qMotor*DEG2RAD) * MatrixTranslate(-(J3_LENGTH-SHOULDER_LENGTH)*INTOPIXELS, 0, 0) * J4.model.transform;
-	Valkyrie.model.transform = MatrixRotateX(-Valkyrie.qMotor*DEG2RAD) * MatrixTranslate(-WRIST_RAD*INTOPIXELS, 0, 0) * Pitch.model.transform;
-	SolenoidModel.transform = MatrixRotateY(M_PI) * MatrixTranslate(WRIST_RAD*INTOPIXELS, 0, 0) * Pitch.model.transform;
+	UpdateRayLibMatrix(J2);
+	UpdateRayLibMatrix(J3);
+	UpdateRayLibMatrix(J4);
+	UpdateRayLibMatrix(Pitch);
+	UpdateRayLibMatrix(Valkyrie);
+	UpdateRayLibMatrix(Solenoid);
+}
+
+void IK::UpdateRayLibMatrix(joint &J)
+{
+	J.model.transform.m0 = J.transf.m0;
+	J.model.transform.m1 = J.transf.m1;
+	J.model.transform.m2 = J.transf.m2;
+	J.model.transform.m3 = J.transf.m3;
+	J.model.transform.m4 = J.transf.m4;
+	J.model.transform.m5 = J.transf.m5;
+	J.model.transform.m6 = J.transf.m6;
+	J.model.transform.m7 = J.transf.m7;
+	J.model.transform.m8 = J.transf.m8;
+	J.model.transform.m9 = J.transf.m9;
+	J.model.transform.m10 = J.transf.m10;
+	J.model.transform.m11 = J.transf.m11;
+	J.model.transform.m12 = J.transf.m12;
+	J.model.transform.m13 = J.transf.m13;
+	J.model.transform.m14 = J.transf.m14;
+	J.model.transform.m15 = J.transf.m15;
 }
 
 void IK::Keyboard() 
@@ -224,14 +233,13 @@ void IK::Update()
 	prevMode = currentMode;
 
 	GripperPos = {0,0,0}; //pixels
-	GripperPos = GripperPos * (MatrixTranslate(-VALK_LENGTH*INTOPIXELS, 0, 0) * Valkyrie.model.transform);
+	GripperPos = GripperPos * (Translate(-VALK_LENGTH*INTOPIXELS, 0, 0) * Valkyrie.transf);
 }
 
 void IK::CalculateApparents() 
 {
-	WristPos.x = ((J2_LENGTH*cosf(J2.qMotor*DEG2RAD))+(J3_LENGTH*cosf((J2.qMotor + J3.qMotor)*DEG2RAD))); //Use matrix library
-	WristPos.y = ((J2_LENGTH*sinf(J2.qMotor*DEG2RAD))+(J3_LENGTH*sinf((J2.qMotor + J3.qMotor)*DEG2RAD)));
-	WristPos.z = J1.qMotor;
+	WristPos = {0,0,0};
+	WristPos = WristPos * (Translate(J3_LENGTH, 0, 0) * Rotate(0,0, J3.qMotor*DEG2RAD) * Translate(J2_LENGTH, 0, 0) * Rotate(0,0, J2.qMotor*DEG2RAD) * Translate(0,0, J1.qMotor));
 
 	wrist.pitch = Pitch.qMotor + J2.qMotor + J3.qMotor;
 	wrist.j4 = J4.qMotor;
@@ -244,8 +252,3 @@ void IK::CalculateApparents()
 	Pitch.qTarget = Pitch.qMotor;
 	Valkyrie.qTarget = Valkyrie.qMotor;
 }
-/*
-Questions:
-Set target ONCE when entering closed mode or IK mode
-	change in real software too, only relevant in closed loop and IK
-*/

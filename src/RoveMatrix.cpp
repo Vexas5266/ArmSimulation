@@ -1,6 +1,6 @@
 #include "RoveMatrix.h"
 
-inline TransfMatrix Rotate(float x, float y, float z) 
+TransfMatrix Rotate(float x, float y, float z) 
 {
     TransfMatrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                             0.0f, 1.0f, 0.0f, 0.0f,
@@ -26,7 +26,7 @@ inline TransfMatrix Rotate(float x, float y, float z)
     return result;
 }
 
-inline TransfMatrix Translate(float x, float y, float z) 
+TransfMatrix Translate(float x, float y, float z) 
 {
     TransfMatrix result = { 1.0f, 0.0f, 0.0f, x,
                             0.0f, 1.0f, 0.0f, y,
@@ -36,7 +36,7 @@ inline TransfMatrix Translate(float x, float y, float z)
     return result;
 }
 
-inline TransfMatrix operator * (const TransfMatrix& left, const TransfMatrix& right) 
+TransfMatrix operator * (const TransfMatrix& left, const TransfMatrix& right) 
 {
     TransfMatrix result = { 0 };
 
@@ -60,7 +60,7 @@ inline TransfMatrix operator * (const TransfMatrix& left, const TransfMatrix& ri
     return result;
 }
 
-inline Vector operator * (Vector v, TransfMatrix mat)
+Vector operator * (Vector v, TransfMatrix mat)
 {
     Vector result = { 0, 0, 0 };
 

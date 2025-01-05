@@ -44,7 +44,6 @@ TODO:
 		Path of motion for keyboard typing?
 		Need to add x axis and shoulder?
 
-	Make my own matrix library, no stdio include!
 	Make xyz pos and joint angles input to IKcalc func, output desired joint angles
 		Call in different file
 		Make IK a library for both simulator and arm board
