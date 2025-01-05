@@ -42,24 +42,24 @@ void IK::Unload()
 
 void IK::TransformArm() 
 {
-	J2.model.transform = MatrixRotateZ(-J2.qMotor*DEG2RAD) * MatrixTranslate(0, 0, INTOPIXELS*J1.qMotor);
-	// J2.transf = Rotate(0,0, -J2.qMotor*DEG2RAD) * Translate(0,0, float(INTOPIXELS*J1.qMotor));
-	// J2.model.transform.m0 = J2.transf.m0;
-	// J2.model.transform.m1 = J2.transf.m1;
-	// J2.model.transform.m2 = J2.transf.m2;
-	// J2.model.transform.m3 = J2.transf.m3;
-	// J2.model.transform.m4 = J2.transf.m4;
-	// J2.model.transform.m5 = J2.transf.m5;
-	// J2.model.transform.m6 = J2.transf.m6;
-	// J2.model.transform.m7 = J2.transf.m7;
-	// J2.model.transform.m8 = J2.transf.m8;
-	// J2.model.transform.m9 = J2.transf.m9;
-	// J2.model.transform.m10 = J2.transf.m10;
-	// J2.model.transform.m11 = J2.transf.m11;
-	// J2.model.transform.m12 = J2.transf.m12;
-	// J2.model.transform.m13 = J2.transf.m13;
-	// J2.model.transform.m14 = J2.transf.m14;
-	// J2.model.transform.m15 = J2.transf.m15;
+	// J2.model.transform = MatrixRotateZ(-J2.qMotor*DEG2RAD) * MatrixTranslate(0, 0, INTOPIXELS*J1.qMotor);
+	J2.transf = Rotate(0,0, -J2.qMotor*DEG2RAD) * Translate(0,0, float(INTOPIXELS*J1.qMotor));
+	J2.model.transform.m0 = J2.transf.m0;
+	J2.model.transform.m1 = J2.transf.m1;
+	J2.model.transform.m2 = J2.transf.m2;
+	J2.model.transform.m3 = J2.transf.m3;
+	J2.model.transform.m4 = J2.transf.m4;
+	J2.model.transform.m5 = J2.transf.m5;
+	J2.model.transform.m6 = J2.transf.m6;
+	J2.model.transform.m7 = J2.transf.m7;
+	J2.model.transform.m8 = J2.transf.m8;
+	J2.model.transform.m9 = J2.transf.m9;
+	J2.model.transform.m10 = J2.transf.m10;
+	J2.model.transform.m11 = J2.transf.m11;
+	J2.model.transform.m12 = J2.transf.m12;
+	J2.model.transform.m13 = J2.transf.m13;
+	J2.model.transform.m14 = J2.transf.m14;
+	J2.model.transform.m15 = J2.transf.m15;
 
 	J3.model.transform = MatrixRotateZ(-J3.qMotor*DEG2RAD) * MatrixTranslate(-J2_LENGTH*INTOPIXELS, 0, 0) * J2.model.transform;
 	J4.model.transform = MatrixRotateX((-J4.qMotor+90)*DEG2RAD) * MatrixTranslate(-SHOULDER_LENGTH*INTOPIXELS, 0, 0) * J3.model.transform;
