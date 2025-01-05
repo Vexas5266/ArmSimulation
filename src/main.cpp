@@ -22,7 +22,7 @@ int main ()
 		UpdateCamera(&camera, CAMERA_FREE);
 		ClearBackground(WHITE);
 
-		ik.Transform();
+		ik.TransformArm();
 		ik.Keyboard();
 		ik.Update();
 
@@ -49,7 +49,7 @@ TODO:
 		Call in different file
 		Make IK a library for both simulator and arm board
 	Update arm software values for physical system
-	Issues with target angles
-		Updating in open mode, with buttons, and limits. User can set target outside of limits
-	Pitch gets limited to wrist 0 for some reason
+
+	Make emb software updated
+	Make own vector struct instead
 */

@@ -62,8 +62,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/vexas/Documents/RoverProjects/raylib-quickstart-main/src",
-      "program": "/Users/vexas/Documents/RoverProjects/raylib-quickstart-main/src/build/Debug/outDebug"
+      "cwd": "/Users/vexas/Documents/Projects/ArmSimulation/src",
+      "program": "/Users/vexas/Documents/Projects/ArmSimulation/src/build/Debug/outDebug"
     }
   ]
 }

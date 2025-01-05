@@ -16,8 +16,8 @@ typedef struct TransfMatrix {
     float m3, m7, m11, m15; // Matrix fourth row (4 components)
 } TransfMatrix;
 
-TransfMatrix Rotate(Vector angle);
-TransfMatrix Translate(Vector translation);
+TransfMatrix Rotate(float x, float y, float z);
+TransfMatrix Translate(float x, float y, float z);
 TransfMatrix operator * (const TransfMatrix& left, const TransfMatrix& right);
 Vector operator * (Vector v, TransfMatrix mat);
 

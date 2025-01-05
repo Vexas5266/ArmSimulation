@@ -1,8 +1,6 @@
 #ifndef IK_H
 #define IK_H
 
-using namespace std;
-
 #include <math.h>
 #include "raylib.h"
 #include "raymath.h"
@@ -94,8 +92,8 @@ class IK {
             limsOverride = false;
             direction = false;
             buttonInput = 0;
-            ControlMode controlMode = OPEN_LOOP;
-            ControlMode prevMode = OPEN_LOOP;
+            currentMode = OPEN_LOOP;
+            prevMode = OPEN_LOOP;
             J2.model = LoadModel("J2Model.obj");
             J3.model = LoadModel("J3Model.obj");
             J4.model = LoadModel("J4Model.obj");
@@ -106,7 +104,7 @@ class IK {
 
         void Draw();
         void Unload();
-        void Transform();
+        void TransformArm();
         void Keyboard();
         void CalculateIK();
         bool atFwdLim(joint J);

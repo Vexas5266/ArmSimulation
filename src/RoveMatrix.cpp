@@ -1,17 +1,17 @@
 #include "RoveMatrix.h"
 
-inline TransfMatrix Rotate(Vector angle) 
+inline TransfMatrix Rotate(float x, float y, float z) 
 {
     TransfMatrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
                             0.0f, 1.0f, 0.0f, 0.0f,
                             0.0f, 0.0f, 1.0f, 0.0f,
                             0.0f, 0.0f, 0.0f, 1.0f };
-    float cosz = cosf(-angle.z);
-    float sinz = sinf(-angle.z);
-    float cosy = cosf(-angle.y);
-    float siny = sinf(-angle.y);
-    float cosx = cosf(-angle.x);
-    float sinx = sinf(-angle.x);
+    float cosz = cosf(-z);
+    float sinz = sinf(-z);
+    float cosy = cosf(-y);
+    float siny = sinf(-y);
+    float cosx = cosf(-x);
+    float sinx = sinf(-x);
 
     result.m0 = cosz*cosy;
     result.m1 = (cosz*siny*sinx) - (sinz*cosx);
@@ -26,11 +26,11 @@ inline TransfMatrix Rotate(Vector angle)
     return result;
 }
 
-inline TransfMatrix Translate(Vector translation) 
+inline TransfMatrix Translate(float x, float y, float z) 
 {
-    TransfMatrix result = { 1.0f, 0.0f, 0.0f, translation.x,
-                            0.0f, 1.0f, 0.0f, translation.y,
-                            0.0f, 0.0f, 1.0f, translation.z,
+    TransfMatrix result = { 1.0f, 0.0f, 0.0f, x,
+                            0.0f, 1.0f, 0.0f, y,
+                            0.0f, 0.0f, 1.0f, z,
                             0.0f, 0.0f, 0.0f, 1.0f };
 
     return result;
