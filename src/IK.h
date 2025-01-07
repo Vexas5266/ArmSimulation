@@ -12,25 +12,9 @@
 #define SPD_MOD2 2.0f
 #define SPD_MOD4 4.0f
 
-
-#define J2_LENGTH 18
-#define J3_LENGTH 18.5
 #define WRIST_RAD 2.887499685
 #define SHOULDER_LENGTH 7.328739921
 #define VALK_LENGTH 6.24943834646
-
-#define J1_FWD_LIM 6.3
-#define J1_REV_LIM -6.3
-
-#define J2_FWD_LIM 164
-#define J2_REV_LIM -54
-
-#define J3_POS_LIM 90
-#define J3_NEG_LIM -116.8
-#define J3_MID_LIM 15
-
-#define PITCH_FWD_LIM 350
-#define PITCH_REV_LIM 10
 
 #define J4_FWD_LIM 90
 #define J4_REV_LIM -260
@@ -104,14 +88,12 @@ class IK {
         void Unload();
         void TransformArm();
         void Keyboard();
-        void CalculateIK();
         bool atFwdLim(joint J);
         bool atRevLim(joint J);
-        bool isOutsideTargetRange(joint J);
         void LimitJoint(joint &J);
         void UpdateJoint(joint &J);
         void Update();
-        void CalculateApparents();
+        void HoldCurrentPosition();
         void UpdateRayLibMatrix(joint &J);
 };
 

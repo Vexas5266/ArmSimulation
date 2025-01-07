@@ -134,40 +134,6 @@ void IK::Keyboard()
 	}
 }
 
-void IK::CalculateIK() 
-{
-
-	//Calculate which solution to use
-	underMode = (J3.qMotor > 0)? true : false;
-
-	//Limit J3 based on which solution is used
-	if (underMode) {
-		J3.FwdLim = J3_POS_LIM;
-		J3.RevLim = J3_MID_LIM;
-	} else {
-		J3.FwdLim = (-1)*J3_MID_LIM;
-		J3.RevLim = J3_NEG_LIM;
-	}
-
-	//Calculate target angles using IK
-	J1.qTarget = WristPos.z;
-	J3.qTarget = RAD2DEG*acos((pow(WristPos.x,2)+pow(WristPos.y,2)-pow(J2_LENGTH,2)-pow(J3_LENGTH,2))/(2*J2_LENGTH*J3_LENGTH));
-
-	if (underMode) J2.qTarget = RAD2DEG*(atan2(WristPos.y, WristPos.x) - atan2(J3_LENGTH*sin(J3.qTarget*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(J3.qTarget*DEG2RAD))));
-	else J2.qTarget = RAD2DEG*(atan2(WristPos.y, WristPos.x) + atan2(J3_LENGTH*sin(J3.qTarget*DEG2RAD),J2_LENGTH+(J3_LENGTH*cos(J3.qTarget*DEG2RAD))));
-	
-	J3.qTarget = underMode? J3.qTarget : -J3.qTarget;
-
-	//Calculate spherical wrist
-	J4.qTarget = 90; //Lock J4
-	Pitch.qTarget = wrist.pitch - (J2.qTarget + J3.qTarget);
-	Valkyrie.qTarget = wrist.valk;
-
-	// Check if calculated angle is invalid and limit movement
-	if (isOutsideTargetRange(J1) || isOutsideTargetRange(J2) || isOutsideTargetRange(J3) || isOutsideTargetRange(Pitch)) CalculateApparents();
-
-}
-
 bool IK::atFwdLim(joint J) 
 {
 	if (limsOverride) return false;
@@ -184,13 +150,6 @@ bool IK::atRevLim(joint J)
 		return (J.qMotor <= J.RevLim) && (J.qMotor >= (J.RevLim + J.FwdLim)/2);
 	}
 	return J.qMotor <= J.RevLim;
-}
-
-bool IK::isOutsideTargetRange(joint J) 
-{
-	if (J.qTarget > J.FwdLim) return true;
-	if (J.qTarget < J.RevLim) return true;
-	return false;
 }
 
 void IK::LimitJoint(joint &J) 
@@ -216,9 +175,9 @@ void IK::UpdateJoint(joint &J)
 
 void IK::Update() 
 {
-	if (((currentMode == CLOSED_LOOP) || (currentMode == INVERSE_KINEMATICS)) && (currentMode != prevMode)) CalculateApparents();
+	if (((currentMode == CLOSED_LOOP) || (currentMode == INVERSE_KINEMATICS)) && (currentMode != prevMode)) HoldCurrentPosition();
 	if (currentMode == INVERSE_KINEMATICS) {
-		CalculateIK();
+		if (!CalculateInverseKinematics(WristPos, wrist.pitch, wrist.valk, J1.qTarget, J2.qTarget, J3.qTarget, J4.qTarget, Pitch.qTarget, Valkyrie.qTarget, J3.FwdLim, J3.RevLim)) HoldCurrentPosition();
 	} else {
 		J3.FwdLim = J3_POS_LIM;
 		J3.RevLim = J3_NEG_LIM;
@@ -236,7 +195,7 @@ void IK::Update()
 	GripperPos = GripperPos * (Translate(-VALK_LENGTH*INTOPIXELS, 0, 0) * Valkyrie.transf);
 }
 
-void IK::CalculateApparents() 
+void IK::HoldCurrentPosition() 
 {
 	WristPos = {0,0,0};
 	WristPos = WristPos * (Translate(J3_LENGTH, 0, 0) * Rotate(0,0, J3.qMotor*DEG2RAD) * Translate(J2_LENGTH, 0, 0) * Rotate(0,0, J2.qMotor*DEG2RAD) * Translate(0,0, J1.qMotor));
